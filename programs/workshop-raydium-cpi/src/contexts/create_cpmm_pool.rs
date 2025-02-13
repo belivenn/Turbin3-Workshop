@@ -7,7 +7,6 @@ use raydium_cpmm_cpi::{
     program::RaydiumCpmm,
     states::{AmmConfig, OBSERVATION_SEED, POOL_LP_MINT_SEED, POOL_SEED, POOL_VAULT_SEED},
 };
-use solana_program::native_token::LAMPORTS_PER_SOL;
 
 use crate::constants::{DEFAULT_DECIMALS, DEFAULT_SUPPLY, WSOL_ID};
 
