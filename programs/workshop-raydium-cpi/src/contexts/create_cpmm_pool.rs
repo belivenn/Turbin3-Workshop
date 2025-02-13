@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken, token::{mint_to, set_authority, spl_token::instruction::AuthorityType, MintTo, SetAuthority}, token_interface::{ Mint, TokenAccount, TokenInterface}
+    associated_token::AssociatedToken,
+    token::{mint_to, set_authority, spl_token::instruction::AuthorityType, MintTo, SetAuthority},
+    token_interface::{Mint, TokenAccount, TokenInterface},
 };
 use raydium_cpmm_cpi::{
     cpi,
@@ -8,7 +10,7 @@ use raydium_cpmm_cpi::{
     states::{AmmConfig, OBSERVATION_SEED, POOL_LP_MINT_SEED, POOL_SEED, POOL_VAULT_SEED},
 };
 
-use crate::constants::{DEFAULT_DECIMALS, DEFAULT_SUPPLY, WSOL_ID};
+use crate::constants::{DEFAULT_DECIMALS, DEFAULT_SUPPLY, FUNDING_AMOUNT, WSOL_ID};
 
 /// This context allows us to create a raydium pool
 #[derive(Accounts)]
@@ -129,7 +131,6 @@ pub struct CreateCpmmPool<'info> {
 }
 
 impl<'info> CreateCpmmPool<'info> {
-
     pub fn issue_tokens(&mut self) -> Result<()> {
         let accounts = MintTo {
             mint: self.token_mint.to_account_info(),
@@ -137,10 +138,7 @@ impl<'info> CreateCpmmPool<'info> {
             authority: self.creator.to_account_info(),
         };
 
-        let ctx = CpiContext::new(
-            self.token_program.to_account_info(),
-            accounts,
-        );
+        let ctx = CpiContext::new(self.token_program.to_account_info(), accounts);
         mint_to(ctx, DEFAULT_SUPPLY)
     }
     pub fn revoke_mint_authority(&self) -> Result<()> {
@@ -148,16 +146,13 @@ impl<'info> CreateCpmmPool<'info> {
             current_authority: self.creator.to_account_info(),
             account_or_mint: self.token_mint.to_account_info(),
         };
-        let ctx = CpiContext::new(
-            self.token_program.to_account_info(),
-            accounts,
-        );
+        let ctx = CpiContext::new(self.token_program.to_account_info(), accounts);
 
         set_authority(ctx, AuthorityType::MintTokens, None)
     }
-    pub fn create_cpmm_pool(&mut self) -> Result<()> {
-
-        let init_amount_0 = self.creator_base_ata.amount;
+    pub fn create_cpmm_pool(&mut self, funding_amount: Option<u64>) -> Result<()> {
+        let init_amount_0 = funding_amount.unwrap_or(FUNDING_AMOUNT);
+        let init_amount_1 = DEFAULT_SUPPLY;
         let open_time = Clock::get()?.unix_timestamp as u64;
 
         let cpi_accounts = cpi::accounts::Initialize {
@@ -183,11 +178,8 @@ impl<'info> CreateCpmmPool<'info> {
             rent: self.rent.to_account_info(),
         };
 
-        let cpi_context = CpiContext::new(
-            self.cp_swap_program.to_account_info(),
-            cpi_accounts,
-        );
-        cpi::initialize(cpi_context, init_amount_0, DEFAULT_SUPPLY, open_time)?;
+        let cpi_context = CpiContext::new(self.cp_swap_program.to_account_info(), cpi_accounts);
+        cpi::initialize(cpi_context, init_amount_0, init_amount_1, open_time)?;
 
         Ok(())
     }

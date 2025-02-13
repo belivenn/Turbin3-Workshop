@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { BN, Program } from "@coral-xyz/anchor";
 import { WorkshopRaydiumCpi } from "../target/types/workshop_raydium_cpi";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount, createSyncNativeInstruction, Account } from "@solana/spl-token";
 import { Keypair, SystemProgram, Commitment, PublicKey, SetComputeUnitLimitParams, ComputeBudgetProgram } from "@solana/web3.js";
@@ -70,7 +70,9 @@ const connection = provider.connection;
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
   );
 
-  const MEMO_PROGRAM = new anchor.web3.PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
+  const MEMO_PROGRAM = new anchor.web3.PublicKey(
+    "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+  );
 
   // Address of the Rent program
   const RENT_PROGRAM = anchor.web3.SYSVAR_RENT_PUBKEY;
@@ -208,7 +210,7 @@ const connection = provider.connection;
       creator.publicKey
     )).address;
     // Amount of SOL to wrap (2 SOL in lamports)
-    const amountToWrap = 5 * anchor.web3.LAMPORTS_PER_SOL;
+    const amountToWrap = 2 * anchor.web3.LAMPORTS_PER_SOL;
 
     // Send transaction to wrap SOL
     const wrapTx = new anchor.web3.Transaction().add(
@@ -225,8 +227,6 @@ const connection = provider.connection;
     console.log("Wrapped 2 SOL into WSOL at:", creator_base_ata.toBase58());
 
     creator_token_ata = getAssociatedTokenAddressSync(token_mint.publicKey, creator.publicKey);
-
-    console.log("creator_token_ata:", creator_token_ata.toBase58());
 
     nft_mint_acc = getAssociatedTokenAddressSync(fee_nft_mint.publicKey, creator.publicKey);
 
@@ -316,6 +316,7 @@ const connection = provider.connection;
 
   const createCpmmPool = await program.methods
     .createCpmmPool(
+      null
   )
     .accountsPartial({
       cpSwapProgram: CPMM_PROGRAM_ID,
@@ -412,6 +413,42 @@ const connection = provider.connection;
   await confirm(sig);
 });
 
+  // CPI Swap
+  it("Swap", async () => {
+    try {
+
+
+    let amount_in = new BN(100000); 
+    await new Promise(f => setTimeout(f, 1000));
+    const swapIx = await program.methods
+      .swap(amount_in, new BN(500)
+    )
+      .accountsPartial({
+        cpSwapProgram: CPMM_PROGRAM_ID,
+        creator: creator.publicKey,
+        authority: authority,
+        ammConfig: AMM_CONFIG_ID,
+        poolState: pool_state,
+        inputTokenAccount: creator_base_ata,
+        outputTokenAccount: creator_token_ata,
+        inputVault: token_vault_0,
+        outputVault: token_vault_1,
+        inputTokenProgram: TOKEN_PROGRAM_ID,
+        outputTokenProgram: TOKEN_PROGRAM_ID,
+        inputTokenMint: WSOL_ID,
+        outputTokenMint: token_mint.publicKey,
+        observationState: observation_state
+      })
+      .signers([creator])
+
+      .rpc({ skipPreflight: true })
+      .then(confirm);
+
+
+  } catch (error) {
+    console.error("\UNIT TEST *Swap* ERROR -", error.message);
+  }
+});
   // CPI Harvest the locked liquidity
   it("Harvest the locked liquidity", async () => {
     try {

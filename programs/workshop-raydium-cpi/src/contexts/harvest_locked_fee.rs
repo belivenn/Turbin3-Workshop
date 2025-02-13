@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    memo::spl_memo, token::TokenAccount, token_interface::{Mint, TokenInterface}
+    memo::spl_memo,
+    token::TokenAccount,
+    token_interface::{Mint, TokenInterface},
 };
 use raydium_cpmm_cpi::{
     program::RaydiumCpmm,
@@ -8,12 +10,12 @@ use raydium_cpmm_cpi::{
 };
 
 use raydium_locking_cpi::{
-    cpi, program::RaydiumLiquidityLocking, states::{LockedCpLiquidityState, LOCKED_LIQUIDITY_SEED}
-
+    cpi,
+    program::RaydiumLiquidityLocking,
+    states::{LockedCpLiquidityState, LOCKED_LIQUIDITY_SEED},
 };
 
-use crate::constants:: LOCK_CPMM_AUTHORITY;
-
+use crate::constants::LOCK_CPMM_AUTHORITY;
 
 #[derive(Accounts)]
 pub struct HarvestLockedLiquidity<'info> {
@@ -119,7 +121,6 @@ pub struct HarvestLockedLiquidity<'info> {
     pub token_1_program: Interface<'info, TokenInterface>,
     pub base_mint: Box<InterfaceAccount<'info, Mint>>,
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
-
 }
 
 impl<'info> HarvestLockedLiquidity<'info> {
@@ -147,10 +148,7 @@ impl<'info> HarvestLockedLiquidity<'info> {
             memo_program: self.memo_program.to_account_info(),
         };
 
-        let cpi_context = CpiContext::new(
-            self.lock_cpmm_program.to_account_info(),
-            cpi_accounts,
-        );
+        let cpi_context = CpiContext::new(self.lock_cpmm_program.to_account_info(), cpi_accounts);
         cpi::collect_cp_fees(cpi_context, fee_lp_amount)?;
 
         Ok(())

@@ -11,10 +11,7 @@ use raydium_cpmm_cpi::{
     states::{AmmConfig, POOL_LP_MINT_SEED, POOL_SEED, POOL_VAULT_SEED},
 };
 
-use raydium_locking_cpi::{
-    cpi, program::RaydiumLiquidityLocking, states::LOCKED_LIQUIDITY_SEED
-
-};
+use raydium_locking_cpi::{cpi, program::RaydiumLiquidityLocking, states::LOCKED_LIQUIDITY_SEED};
 
 use crate::constants::LOCK_CPMM_AUTHORITY;
 
@@ -30,7 +27,7 @@ pub struct LockCpmmLiquidity<'info> {
     /// CHECK: the authority of token vault that cp is locked
     #[account(address = LOCK_CPMM_AUTHORITY)]
     pub authority: UncheckedAccount<'info>,
-    #[account(mut)]                                   
+    #[account(mut)]
     pub fee_nft_mint: Signer<'info>,
     /// CHECK: Checked by the CPI
     #[account(mut)]
@@ -111,8 +108,7 @@ pub struct LockCpmmLiquidity<'info> {
     pub rent: Sysvar<'info, Rent>,
     pub token_program: Program<'info, Token>,
     pub base_mint: Box<Account<'info, Mint>>,
-    pub token_mint: Box<Account<'info, Mint>>,    
-
+    pub token_mint: Box<Account<'info, Mint>>,
 }
 
 impl<'info> LockCpmmLiquidity<'info> {
@@ -141,10 +137,7 @@ impl<'info> LockCpmmLiquidity<'info> {
             metadata_program: self.metadata_program.to_account_info(),
         };
 
-        let cpi_context = CpiContext::new(
-            self.lock_cpmm_program.to_account_info(),
-            cpi_accounts,
-        );
+        let cpi_context = CpiContext::new(self.lock_cpmm_program.to_account_info(), cpi_accounts);
         cpi::lock_cp_liquidity(cpi_context, lp_amount, false)?;
 
         Ok(())
