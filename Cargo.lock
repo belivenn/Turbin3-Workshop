@@ -2684,7 +2684,6 @@ dependencies = [
  "raydium-cpmm-cpi",
  "raydium-locking-cpi",
  "solana-program",
- "spl-memo",
 ]
 
 [[package]]
