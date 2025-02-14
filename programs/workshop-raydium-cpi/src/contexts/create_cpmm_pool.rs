@@ -18,6 +18,34 @@ pub struct CreateCpmmPool<'info> {
     pub cp_swap_program: Program<'info, RaydiumCpmm>,
     #[account(mut)]
     pub creator: Signer<'info>,
+    #[account(
+        init,
+        payer = creator,
+        mint::decimals = DEFAULT_DECIMALS,
+        mint::authority = creator,
+        mint::token_program = token_program,
+    )]
+    pub token_mint: Box<InterfaceAccount<'info, Mint>>,
+    #[account(
+        mut,
+        address = WSOL_ID,
+        constraint = base_mint.key() < token_mint.key(),
+        mint::token_program = token_program,
+    )]
+    pub base_mint: Box<InterfaceAccount<'info, Mint>>,
+    #[account(
+        mut,
+        associated_token::mint = base_mint,
+        associated_token::authority  = creator,
+    )]
+    pub creator_base_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    #[account(
+        init,
+        payer = creator,
+        associated_token::mint = token_mint,
+        associated_token::authority = creator
+    )]
+    pub creator_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     pub amm_config: Box<Account<'info, AmmConfig>>,
     /// CHECK: pool vault and lp mint authority
     #[account(
@@ -41,21 +69,6 @@ pub struct CreateCpmmPool<'info> {
         bump,
     )]
     pub pool_state: UncheckedAccount<'info>,
-    #[account(
-        mut,
-        address = WSOL_ID,
-        constraint = base_mint.key() < token_mint.key(),
-        mint::token_program = token_program,
-    )]
-    pub base_mint: Box<InterfaceAccount<'info, Mint>>,
-    #[account(
-        init,
-        payer = creator,
-        mint::decimals = DEFAULT_DECIMALS,
-        mint::authority = creator,
-        mint::token_program = token_program,
-    )]
-    pub token_mint: Box<InterfaceAccount<'info, Mint>>,
     /// CHECK: pool lp mint, init by cp-swap
     #[account(
         mut,
@@ -67,19 +80,6 @@ pub struct CreateCpmmPool<'info> {
         bump,
     )]
     pub lp_mint: UncheckedAccount<'info>,
-    #[account(
-        mut,
-        associated_token::mint = base_mint,
-        associated_token::authority  = creator,
-    )]
-    pub creator_base_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-    #[account(
-        init,
-        payer = creator,
-        associated_token::mint = token_mint,
-        associated_token::authority = creator
-    )]
-    pub creator_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
     /// CHECK: creator lp ATA token account, init by cp-swap
     #[account(mut)]
     pub creator_lp_token: UncheckedAccount<'info>,
